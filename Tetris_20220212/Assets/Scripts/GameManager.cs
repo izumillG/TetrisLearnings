@@ -316,8 +316,9 @@ public class GameManager : MonoBehaviour
 
     private void PutGhost() // to do
     {
-        while (MoveMino(m_mino.Drop, m_mino.UnDrop,false,true));// to do
+        //while (MoveMino(m_mino.Drop, m_mino.UnDrop,false,true));// to do
     }
+    
     private int ClearLine()
     {
         int retClearLines = 0;

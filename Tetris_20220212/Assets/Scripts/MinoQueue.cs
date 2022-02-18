@@ -5,8 +5,7 @@ using System.Linq;
 
 public class MinoQueue
 {
-    // public List<BlockType> MinoQueueList { get; private set; } = new List<BlockType>();
-    private Queue<BlockType> MinoQueue = null;
+    private Queue<BlockType> m_MinoQueue = null;
 
     private List<BlockType> CreateRandomizeMinoList()
     {
@@ -25,31 +24,21 @@ public class MinoQueue
 
     public BlockType GetNextMino()
     {
-        if(MinoQueue == null)
+        if(m_MinoQueue == null)
         {
-            MinoQueue = new Queue<BlockType>();
+            m_MinoQueue = new Queue<BlockType>();
         }
         
-        if(!MinoQueue.Any())
+        if(!m_MinoQueue.Any())
         {
             var newMinoList = CreateRandomizeMinoList();
             newMinoList.ForEach(mino =>
             {
-                MinoQueue.Enqueue(mino);
+                m_MinoQueue.Enqueue(mino);
             });
         }
 
-        var nextMino = MinoQueue.Dequeue();
+        var nextMino = m_MinoQueue.Dequeue();
         return nextMino;
-
-        /*
-        if (MinoQueueList.Count <= 7)
-        {
-            MinoQueueList.AddRange();
-        }
-        BlockType retNextMino = MinoQueueList[0];
-        MinoQueueList.RemoveAt(0);
-        return retNextMino;
-        */
     }
 }
