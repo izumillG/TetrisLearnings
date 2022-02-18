@@ -236,6 +236,41 @@ public class GameManager : MonoBehaviour
         }
         return true;
     }
+
+    // Minoと動く方向を引数に渡すと、その方向に動けるかを返す
+    private bool CalcPutMino(Mino mino, Mino.MoveType moveType)
+    {
+        var mino = m_mino;
+        switch(moveType)
+        {
+            case Mino.MoveType.Left:
+                mino.GoToLeft();
+                break;
+            case Mino.MoveType.Right:
+                mino.GoToRight();
+                break;
+            case Mino.MoveType.Drop:
+                mino.Drop();
+                break;
+        }
+
+        for (int x = 0; x < mino.Size; x++)
+        {
+            for (int y = 0; y < mino.Size; y++)
+            {
+                if (mino.Shape[x, y])
+                {
+                    if (m_stage[mino.PosX + x, mino.PosY + y].BlockType != BlockType.Empty)
+                    {
+                        Debug.Log((mino.PosX + x) + ","+ (mino.PosY + y) + "�ɂ͒u���Ȃ���");
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    
     private bool MoveMino(Action Doing, Action Undoing, bool isLanding = false, bool isGhost = false)
     {// to do
         bool result = false;

@@ -3,6 +3,13 @@ using System.Collections.Generic;
 
 public class Mino // アクティヴミノの挙動に必要な変数や関数を集めたクラス。
 {
+    public enum MoveType
+    {
+        Left,
+        Right,
+        Drop        
+    }
+
     public int PosX { get; set; } = default;
     public int PosY { get; set; } = default;
     public int GhostPosX { get; set; } = default;
