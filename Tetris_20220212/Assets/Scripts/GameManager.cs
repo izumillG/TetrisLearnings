@@ -240,29 +240,34 @@ public class GameManager : MonoBehaviour
     // Minoと動く方向を引数に渡すと、その方向に動けるかを返す
     private bool CalcPutMino(Mino mino, Mino.MoveType moveType)
     {
-        var mino = m_mino;
+        // 計算用Minoクラスを複製
+        var calcMino = new Mino();
+        calcMino = mino;
+
+        // 計算用Minoを指定方向に動かす
         switch(moveType)
         {
             case Mino.MoveType.Left:
-                mino.GoToLeft();
+                calcMino.GoToLeft();
                 break;
             case Mino.MoveType.Right:
-                mino.GoToRight();
+                calcMino.GoToRight();
                 break;
             case Mino.MoveType.Drop:
-                mino.Drop();
+                calcMino.Drop();
                 break;
         }
 
-        for (int x = 0; x < mino.Size; x++)
+        // 計算用Minoが置ける状態か検証
+        for (int x = 0; x < calcMino.Size; x++)
         {
-            for (int y = 0; y < mino.Size; y++)
+            for (int y = 0; y < calcMino.Size; y++)
             {
-                if (mino.Shape[x, y])
+                if (calcMino.Shape[x, y])
                 {
-                    if (m_stage[mino.PosX + x, mino.PosY + y].BlockType != BlockType.Empty)
+                    if (m_stage[calcMino.PosX + x, calcMino.PosY + y].BlockType != BlockType.Empty)
                     {
-                        Debug.Log((mino.PosX + x) + ","+ (mino.PosY + y) + "�ɂ͒u���Ȃ���");
+                        Debug.Log((calcMino.PosX + x) + ","+ (calcMino.PosY + y) + "�ɂ͒u���Ȃ���");
                         return false;
                     }
                 }
