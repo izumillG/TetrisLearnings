@@ -94,6 +94,8 @@ public class GameManager : MonoBehaviour
         ControlMino();
         
         WaitControl();
+
+        PrintStatus();
     }
 
     private void CreateMino()
@@ -147,7 +149,7 @@ public class GameManager : MonoBehaviour
         if (m_dropCurrentTime > m_refreshSpan)
         {
             m_dropCurrentTime = 0f;
-            MoveMino(m_mino.Drop, m_mino.UnDrop, true);
+            MoveMino(m_mino, Mino.MoveType.Drop);
         }
     }
 
@@ -383,7 +385,7 @@ public class GameManager : MonoBehaviour
         }
 
         m_moveCurrentTime = 0f;
-        MoveMino(m_mino.GoToLeft, m_mino.GoToRight);
+        MoveMino(m_mino, Mino.MoveType.Left);
         m_isLeftButtonPressed = PressType.HalfPressed;
     }
 
@@ -403,7 +405,7 @@ public class GameManager : MonoBehaviour
         }
 
         m_moveCurrentTime = 0f;
-        MoveMino(m_mino.GoToRight, m_mino.GoToLeft);
+        MoveMino(m_mino, Mino.MoveType.Right);
         m_isRightButtonPressed = PressType.HalfPressed;
     }
 
@@ -420,7 +422,7 @@ public class GameManager : MonoBehaviour
         if (InputPressedDown)
         {
             m_dropCurrentTime = 0f;
-            MoveMino(m_mino.Drop, m_mino.UnDrop);
+            MoveMino(m_mino, Mino.MoveType.Drop);
             m_isDownButtonPressed = true;
         }
     }
@@ -458,6 +460,141 @@ public class GameManager : MonoBehaviour
     }
 
     #endregion
+
+
+    private void MoveMino(Mino mino, Mino.MoveType moveType)
+    {
+        if (mino == null)
+        {
+            return;
+        }
+
+        switch (moveType)
+        {
+            case Mino.MoveType.Left:
+                MoveTypeLeft(mino);
+                break;
+            case Mino.MoveType.Right:
+                MoveTypeRight(mino);
+                break;
+            case Mino.MoveType.Drop:
+                MoveTypeDrop(mino);
+                break;
+        }
+    }
+
+    private void MoveTypeLeft(Mino mino)
+    {
+        PutMino(true, false);
+        if (CanMoveMino(mino, Mino.MoveType.Left))
+        {
+            mino.GoToLeft();
+        }
+        PutMino(false, false);
+    }
+
+    private void MoveTypeRight(Mino mino)
+    {
+        PutMino(true, false);
+        if (CanMoveMino(mino, Mino.MoveType.Right))
+        {
+            mino.GoToRight();
+        }
+        PutMino(false, false);
+    }
+
+    private void MoveTypeDrop(Mino mino)
+    {
+        PutMino(true, false);
+        if (CanMoveMino(mino, Mino.MoveType.Drop))
+        {
+            mino.Drop();
+            PutMino(false, false);
+            return;
+        }
+
+        // minoを置いてライン成立判定
+        PutMino(false, false);
+        m_totalClearedLines += ClearLine();
+
+        // 操作中のminoを破棄
+        m_mino = null;
+    }
+
+    /// <summary>
+    /// Minoと動く方向を引数に渡すと、その方向に動けるかを返す
+    /// </summary>
+    /// <param name="mino"></param>
+    /// <param name="moveType"></param>
+    /// <returns></returns>
+    private bool CanMoveMino(Mino mino, Mino.MoveType moveType)
+    {
+        // 計算用Minoクラスを複製
+        var calcMino = new Mino();
+        calcMino.PosX = mino.PosX;
+        calcMino.PosY = mino.PosY;
+        calcMino.Size = mino.Size;
+        calcMino.Shape = mino.Shape;
+
+        // 計算用Minoを指定方向に動かす
+        switch (moveType)
+        {
+            case Mino.MoveType.Left:
+                calcMino.GoToLeft();
+                break;
+            case Mino.MoveType.Right:
+                calcMino.GoToRight();
+                break;
+            case Mino.MoveType.Drop:
+                calcMino.Drop();
+                break;
+        }
+
+        // 計算用Minoが置ける状態か検証
+        for (int x = 0; x < calcMino.Size; x++)
+        {
+            for (int y = 0; y < calcMino.Size; y++)
+            {
+                if (calcMino.Shape[x, y])
+                {
+                    if (m_stage[calcMino.PosX + x, calcMino.PosY + y].BlockType != BlockType.Empty)
+                    {
+                        Debug.Log((calcMino.PosX + x) + "," + (calcMino.PosY + y) + "�ɂ͒u���Ȃ���");
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+
+    private bool MoveMino(Action Doing, Action Undoing, bool isLanding = false, bool isGhost = false)
+    {// to do
+        bool result = false;
+
+        PutMino(true, isGhost);
+        Doing();
+        if (IsCanPut())
+        {
+            PutMino(false, isGhost);
+            result = true;
+        }
+        else
+        {
+            Undoing();
+            PutMino(false, isGhost);
+            if (isLanding)
+            {
+                m_totalClearedLines += ClearLine();
+
+                // 操作中のminoを破棄
+                m_mino = null;
+            }
+        }
+        PrintStatus();
+        return result;
+    }
 
 
 
@@ -523,71 +660,7 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
-    // Minoと動く方向を引数に渡すと、その方向に動けるかを返す
-    private bool CalcPutMino(Mino mino, Mino.MoveType moveType)
-    {
-        // 計算用Minoクラスを複製
-        var calcMino = new Mino();
-        calcMino = mino;
-
-        // 計算用Minoを指定方向に動かす
-        switch(moveType)
-        {
-            case Mino.MoveType.Left:
-                calcMino.GoToLeft();
-                break;
-            case Mino.MoveType.Right:
-                calcMino.GoToRight();
-                break;
-            case Mino.MoveType.Drop:
-                calcMino.Drop();
-                break;
-        }
-
-        // 計算用Minoが置ける状態か検証
-        for (int x = 0; x < calcMino.Size; x++)
-        {
-            for (int y = 0; y < calcMino.Size; y++)
-            {
-                if (calcMino.Shape[x, y])
-                {
-                    if (m_stage[calcMino.PosX + x, calcMino.PosY + y].BlockType != BlockType.Empty)
-                    {
-                        Debug.Log((calcMino.PosX + x) + ","+ (calcMino.PosY + y) + "�ɂ͒u���Ȃ���");
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
     
-    private bool MoveMino(Action Doing, Action Undoing, bool isLanding = false, bool isGhost = false)
-    {// to do
-        bool result = false;
-
-        PutMino(true, isGhost);
-        Doing();
-        if (IsCanPut())
-        {
-            PutMino(false,isGhost);
-            result = true;
-        }
-        else
-        {
-            Undoing();
-            PutMino(false,isGhost);
-            if (isLanding)
-            {
-                m_totalClearedLines += ClearLine();
-
-                // 操作中のminoを破棄
-                m_mino = null;
-            }
-        }
-        PrintStatus();
-        return result;
-    }
 
     private void WaitControl()
     {
