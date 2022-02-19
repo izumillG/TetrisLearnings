@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Mino // アクティヴミノの挙動に必要な変数や関数を集めたクラス。
+public class Mino
 {
     public enum MoveType
     {
@@ -14,9 +14,9 @@ public class Mino // アクティヴミノの挙動に必要な変数や関数を集めたクラス。
     public int PosY { get; set; } = default;
     public int GhostPosX { get; set; } = default;
     public int GhostPosY { get; set; } = default;
-    public int Size { get; private set; } = default;
+    public int Size { get; set; } = default;
     public BlockType Type { get; set; } = BlockType.Empty;
-    public bool[,] Shape { get; private set; } = new bool[4, 4];
+    public bool[,] Shape { get; set; } = new bool[4, 4];
 
     private bool[,] minoT =
         {
@@ -121,7 +121,7 @@ public class Mino // アクティヴミノの挙動に必要な変数や関数を集めたクラス。
         }
         GhostPosX = PosX;
         GhostPosY = PosY;
-        Shape = Util.LeftRot(Shape); // 配列を読む際に逆転する書き方をしているので調整する。
+        Shape = Util.LeftRot(Shape);
         Type = blockType;
     }
 
