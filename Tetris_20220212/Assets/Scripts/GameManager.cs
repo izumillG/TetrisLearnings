@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 public class GameManager : MonoBehaviour
-{
+{    
     private enum PressType
     {
         NonPressed,
@@ -11,8 +11,8 @@ public class GameManager : MonoBehaviour
         StrongPressed,
         PressTypeMax
     }
-    private const int STAGE_MAX_X = 12; // ƒXƒe[ƒW‚Ì‰¡•‚Í10s‚É•ÇƒuƒƒbƒN2‚ÂB
-    private const int STAGE_MAX_Y = 21; // ƒXƒe[ƒW‚Ìc•20s‚É°ƒuƒƒbƒN1‚ÂB
+    private const int STAGE_MAX_X = 12;
+    private const int STAGE_MAX_Y = 21;
     private bool m_isGameOver = false;
     private bool m_isDownButtonPressed = false;
     private int m_totalClearedLines = 0;
@@ -20,57 +20,35 @@ public class GameManager : MonoBehaviour
     private PressType m_isLeftButtonPressed     = PressType.NonPressed;
     private PressType m_isRightButtonPressed    = PressType.NonPressed;
 
-    [SerializeField] private float m_buttonPressedJudgeSpan = 0.3f; // ’·‰Ÿ‚µ”»’è‚ÌŽžŠÔ
-    [SerializeField] private float m_minoMoveSpan = 0.05f; // ƒuƒƒbƒNˆÚ“®‚ÌŠÔŠu
-    [SerializeField] private int m_speedMaximizeLineNum = 40; // —Ž‰º‘¬“x‚ªÅ‘å‚É‚È‚éƒ‰ƒCƒ“”
-    [SerializeField] private float m_minDropSpeed = 1f; // Ž©“®—Ž‰º‚ÌŠî–{‘¬“x
-    [SerializeField] private float m_maxDropSpeed = 0.2f; // Ž©“®—Ž‰º‚ÌÅ‘å‘¬“x
-    private float m_refreshSpan = 1f; // Ž©“®—Ž‰º‚ÌŠî–{‘¬“x
-    private float m_dropSpeedCoefficient = 0; // —Ž‰º‘¬“xŒW”
+    [SerializeField] private float m_buttonPressedJudgeSpan = 0.3f;
+    [SerializeField] private float m_minoMoveSpan = 0.05f;
+    [SerializeField] private int m_speedMaximizeLineNum = 40;
+    [SerializeField] private float m_minDropSpeed = 1f;
+    [SerializeField] private float m_maxDropSpeed = 0.2f;
+    private float m_dropSpeedCoefficient = 0;
 
-    private float m_dropCurrentTime = 0f; // —Ž‰º‚É‚Â‚¢‚Ä‚ÌƒtƒŒ[ƒ€‚²‚Æ‚Ì•b”‚ÌƒJƒEƒ“ƒ^[
-    private float m_moveCurrentTime = 0f; // ¶‰EˆÚ“®‚É‚Â‚¢‚Ä‚ÌƒtƒŒ[ƒ€‚²‚Æ‚Ì•b”‚ÌƒJƒEƒ“ƒ^[
-    private bool m_isFirstUpdate = true;
+    private float m_moveCurrentTime = 0f;
 
-    private Mino m_mino = new Mino(); // —Ž‰º’†‚Ìƒ~ƒm‚ÌƒCƒ“ƒXƒ^ƒ“ƒX
     private MinoQueue m_queue = new MinoQueue();
 
-    [SerializeField] private Block m_blockObject = null; // prefab‚ð“Ç‚Ýž‚ÞUnity‚Ìˆ—‚ð‚·‚éB
+    [SerializeField] private Block m_blockObject = null;
     private Block[,] m_stage = new Block[STAGE_MAX_X, STAGE_MAX_Y];
-    // ƒuƒƒbƒN‚Ì”z—ñ‚É‚æ‚éƒtƒB[ƒ‹ƒh‚Ì¶¬Bƒ‚ƒjƒ^[‚ÌƒCƒ[ƒWB
+
     void Start()
     {
+        Initialize();
+    }
+
+
+    #region Initialize
+
+    private void Initialize()
+    {
         GenerateStage();
+
         CreateWall();
     }
-    void Update()
-    {
-        if (m_isGameOver)
-        {
-            Debug.Log("‚¨‚µ‚Ü‚¢I@" + m_totalClearedLines +"ƒ‰ƒCƒ“Á‚µ‚Ü‚µ‚½B‚Ü‚½—V‚ñ‚Å‚ËI");
-            return;
-        }
 
-        if (m_isFirstUpdate) // Œ»Ý‚Ìˆ—‚Å‚Í1•b–Ú‚ª‹ó”’‚É‚È‚é‚½‚ß•Ê“r1•b–Úê—p‚Ìˆ—‚ð‘–‚ç‚¹‚éB
-        {
-            CreateMino();
-            m_isFirstUpdate = false;
-        }
-
-        DropSpeedManager(m_totalClearedLines);
-        ControlMino();
-        WaitControl();
-
-        if (!m_isDownButtonPressed)
-        {
-            m_dropCurrentTime += Time.deltaTime; // 1•b‚²‚Æ‚Éˆ—‚ð‘–‚ç‚¹‚é‚½‚ß‚ÌƒMƒ~ƒbƒNB
-            if (m_dropCurrentTime > m_refreshSpan)
-            {
-                m_dropCurrentTime = 0f;
-                MoveMino(m_mino.Drop, m_mino.UnDrop, true);
-            }
-        }
-     }
     private void GenerateStage()
     {
         for (int x = 0; x < STAGE_MAX_X; x++)
@@ -82,12 +60,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void DropSpeedManager(int totalClearedLines)
-    {
-        m_dropSpeedCoefficient = (m_minDropSpeed - m_maxDropSpeed) / m_speedMaximizeLineNum;
-        m_refreshSpan = m_totalClearedLines > m_speedMaximizeLineNum ? m_maxDropSpeed : m_minDropSpeed - m_dropSpeedCoefficient * totalClearedLines;
-    }
-
     private void CreateWall()
     {
         for (int x = 0; x < STAGE_MAX_X; x++)
@@ -97,14 +69,43 @@ public class GameManager : MonoBehaviour
                 if (x == 0 || x == STAGE_MAX_X - 1 || y == STAGE_MAX_Y - 1)
                 {
                     m_stage[x, y].BlockType = BlockType.Wall;
-                    // •Ç‚ÉŠY“–‚·‚é‰ÓŠ‚¾‚¯ƒuƒƒbƒNƒ^ƒCƒv‚ð•Ç‚É•ÏX
                 }
             }
         }
     }
+
+    #endregion
+
+
+    private Mino m_mino = null;
+
+    void Update()
+    {
+        if (m_isGameOver)
+        {
+            Debug.Log("ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Iï¿½@" + m_totalClearedLines + "ï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½Bï¿½Ü‚ï¿½ï¿½Vï¿½ï¿½Å‚ËI");
+            return;
+        }
+
+        CreateMino();
+
+        DropSpeedManager(m_totalClearedLines);
+
+        ControlMino();
+        
+        WaitControl();
+    }
+
     private void CreateMino()
     {
-        m_mino.GenerateMino(m_queue.GetNextMino()); // ‰ŠúˆÊ’u‚Éƒ~ƒm‚ð¶¬‚·‚éB
+        if(m_mino != null)
+        {
+            // æ“ä½œä¸­ã®minoãŒå­˜åœ¨ã™ã‚‹ã®ã§çµ‚äº†
+            return;
+        }
+
+        m_mino = new Mino();
+        m_mino.GenerateMino(m_queue.GetNextMino());
         if (IsCanPut())
         {
             PutMino();
@@ -113,66 +114,352 @@ public class GameManager : MonoBehaviour
         else
         {
             m_isGameOver = true;
-            Debug.Log("ƒ~ƒm‚ªo‚¹‚È‚¢");
+            Debug.Log("ï¿½~ï¿½mï¿½ï¿½ï¿½oï¿½ï¿½ï¿½È‚ï¿½");
             return;
         }
+
         PrintStatus();
         m_moveCurrentTime = 0f;
     }
+
+    private void LateUpdate()
+    {
+        UpdateDropMino();
+    }
+
+    private float m_refreshSpan = 1f;
+    private float m_dropCurrentTime = 0f;
+    private void UpdateDropMino()
+    {
+        if (m_mino == null)
+        {
+            // æ“ä½œä¸­ã®minoãŒå­˜åœ¨ã—ãªã„
+            return;
+        }
+
+        if (m_isDownButtonPressed)
+        {
+            // ä¸‹å…¥åŠ›ãŒå…¥ã£ã¦ã„ã‚‹å ´åˆã¯å‡¦ç†ã—ãªã„
+            return;
+        }
+
+        m_dropCurrentTime += Time.deltaTime;
+        if (m_dropCurrentTime > m_refreshSpan)
+        {
+            m_dropCurrentTime = 0f;
+            MoveMino(m_mino.Drop, m_mino.UnDrop, true);
+        }
+    }
+
+    private void DropSpeedManager(int totalClearedLines)
+    {
+        m_dropSpeedCoefficient = (m_minDropSpeed - m_maxDropSpeed) / m_speedMaximizeLineNum;
+        m_refreshSpan = m_totalClearedLines > m_speedMaximizeLineNum ? m_maxDropSpeed : m_minDropSpeed - m_dropSpeedCoefficient * totalClearedLines;
+    }
+
     private void ControlMino()
     {
-        if (Gamepad.current == null) return;
+        OnPressedLeft();
+        OnPressedRight();
+        OnPressedDown();
+        OnPressedUp();
+        OnPressedAButton();
+        OnPressedBButton();
 
-        if (Gamepad.current.dpad.left.wasPressedThisFrame)
+        OnReleasedLeft();
+        OnReleasedRight();
+        OnReleasedDown();
+    }
+
+    #region InputSystem
+
+    private Gamepad CurrentGamePad
+    {
+        get
         {
-            m_moveCurrentTime = 0f;
-            MoveMino(m_mino.GoToLeft, m_mino.GoToRight);
-            m_isLeftButtonPressed = PressType.HalfPressed;
+            return Gamepad.current;
         }
-        else if (Gamepad.current.dpad.right.wasPressedThisFrame)
+    }
+
+    private Keyboard CurrentKeyboard
+    {
+        get
         {
-            m_moveCurrentTime = 0f;
-            MoveMino(m_mino.GoToRight, m_mino.GoToLeft);
-            m_isRightButtonPressed = PressType.HalfPressed;
+            return Keyboard.current;
+        }
+    }
+
+    #region InputLeft
+
+    private bool InputPressedLeft
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.left.wasPressedThisFrame;
+            }
+
+            if(CurrentKeyboard != null)
+            {
+                return Keyboard.current.leftArrowKey.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    private bool InputReleasedLeft
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.left.wasReleasedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.leftArrowKey.wasReleasedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region InputRight
+
+    private bool InputPressedRight
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.right.wasPressedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.rightArrowKey.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    private bool InputReleasedRight
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.right.wasReleasedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.rightArrowKey.wasReleasedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region InputDown
+
+    private bool InputPressedDown
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.down.wasPressedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.downArrowKey.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    private bool InputReleasedDown
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.down.wasReleasedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.downArrowKey.wasReleasedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region InputUp
+
+    private bool InputPressedUp
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.dpad.up.wasPressedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.upArrowKey.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region InputButton
+
+    private bool InputPressedAButton
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.aButton.wasPressedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.spaceKey.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    private bool InputPressedBButton
+    {
+        get
+        {
+            if (CurrentGamePad != null)
+            {
+                return CurrentGamePad.bButton.wasPressedThisFrame;
+            }
+
+            if (CurrentKeyboard != null)
+            {
+                return Keyboard.current.leftAltKey.wasPressedThisFrame;
+            }
+
+            return false;
+        }
+    }
+
+    #endregion
+
+    #endregion
+
+    #region InputEvent
+
+    private void OnPressedLeft()
+    {
+        if(!InputPressedLeft || InputPressedRight)
+        {
+            return;
         }
 
-        if (Gamepad.current.dpad.left.wasReleasedThisFrame)
+        m_moveCurrentTime = 0f;
+        MoveMino(m_mino.GoToLeft, m_mino.GoToRight);
+        m_isLeftButtonPressed = PressType.HalfPressed;
+    }
+
+    private void OnReleasedLeft()
+    {
+        if (InputReleasedLeft)
         {
             m_isLeftButtonPressed = PressType.NonPressed;
         }
+    }
 
-        if (Gamepad.current.dpad.right.wasReleasedThisFrame)
+    private void OnPressedRight()
+    {
+        if (!InputPressedRight || InputPressedLeft)
+        {
+            return;
+        }
+
+        m_moveCurrentTime = 0f;
+        MoveMino(m_mino.GoToRight, m_mino.GoToLeft);
+        m_isRightButtonPressed = PressType.HalfPressed;
+    }
+
+    private void OnReleasedRight()
+    {
+        if (InputReleasedRight)
         {
             m_isRightButtonPressed = PressType.NonPressed;
         }
+    }
 
-        if (Gamepad.current.dpad.down.wasPressedThisFrame)
+    private void OnPressedDown()
+    {
+        if (InputPressedDown)
         {
             m_dropCurrentTime = 0f;
             MoveMino(m_mino.Drop, m_mino.UnDrop);
             m_isDownButtonPressed = true;
-
         }
-        if (Gamepad.current.dpad.down.wasReleasedThisFrame)
+    }
+
+    private void OnReleasedDown()
+    {
+        if (InputReleasedDown)
         {
             m_isDownButtonPressed = false;
         }
+    }
 
-        if (Gamepad.current.aButton.wasPressedThisFrame)
+    private void OnPressedUp()
+    {
+        if (InputPressedUp)
         {
-            MoveMino(m_mino.RightRot,m_mino.LeftRot);
+            while (MoveMino(m_mino.Drop, m_mino.UnDrop, true)) ;
         }
+    }
 
-        if (Gamepad.current.bButton.wasPressedThisFrame)
+    private void OnPressedAButton()
+    {
+        if (InputPressedAButton)
+        {
+            MoveMino(m_mino.RightRot, m_mino.LeftRot);
+        }
+    }
+
+    private void OnPressedBButton()
+    {
+        if (InputPressedBButton)
         {
             MoveMino(m_mino.LeftRot, m_mino.RightRot);
         }
-
-        if (Gamepad.current.dpad.up.wasPressedThisFrame)
-        {
-            while (MoveMino(m_mino.Drop, m_mino.UnDrop, true));
-        }
     }
+
+    #endregion
+
+
 
     private void PrintStatus()
     {
@@ -181,12 +468,11 @@ public class GameManager : MonoBehaviour
             for (int y = 0; y < STAGE_MAX_Y; y++)
             {
                 m_stage[x, y].DyeBlock();
-                // ƒXƒe[ƒW‚ÌƒuƒƒbƒNó‘Ô‚É‡‚í‚¹‚Ä•`ŽÊ‚·‚éB
             }
         }
     }
 
-    private void PutMino(bool isErase = false, bool isGhost = false) // ƒAƒNƒeƒBƒ”ƒ~ƒm‚ÌˆÚ“®‚ÌŒã‰æ‘œ‚ðƒNƒŠƒA‚·‚éˆ—‚ð“ü‚ê‚éB
+    private void PutMino(bool isErase = false, bool isGhost = false)
     {
         BlockType blockType = BlockType.Empty;
         if (isErase)
@@ -213,7 +499,7 @@ public class GameManager : MonoBehaviour
                     {
                         m_stage[m_mino.PosX + x, m_mino.PosY + y].BlockType = blockType;
                     }
-                } // ƒAƒNƒeƒBƒ”ƒ~ƒm‚ÌŒ»ÝˆÊ’u‚ðŽn“®‚ÉŠY“–”ÍˆÍ“à‚ÌƒuƒƒbƒN‚ÌƒXƒe[ƒ^ƒX‚ð•ÏX‚·‚éB
+                }
             }
         }
     }
@@ -228,7 +514,7 @@ public class GameManager : MonoBehaviour
                 {
                     if (m_stage[m_mino.PosX + x, m_mino.PosY + y].BlockType != BlockType.Empty)
                     {
-                        Debug.Log((m_mino.PosX + x) + ","+ (m_mino.PosY + y) + "‚É‚Í’u‚¯‚È‚¢‚æ");
+                        Debug.Log((m_mino.PosX + x) + ","+ (m_mino.PosY + y) + "ï¿½É‚Í’uï¿½ï¿½ï¿½È‚ï¿½ï¿½ï¿½");
                         return false;
                     }
                 }
@@ -294,7 +580,9 @@ public class GameManager : MonoBehaviour
             if (isLanding)
             {
                 m_totalClearedLines += ClearLine();
-                CreateMino();
+
+                // æ“ä½œä¸­ã®minoã‚’ç ´æ£„
+                m_mino = null;
             }
         }
         PrintStatus();
@@ -358,7 +646,7 @@ public class GameManager : MonoBehaviour
     {
         //while (MoveMino(m_mino.Drop, m_mino.UnDrop,false,true));// to do
     }
-    
+
     private int ClearLine()
     {
         int retClearLines = 0;
@@ -375,7 +663,7 @@ public class GameManager : MonoBehaviour
             if (isFilledLine)
             {
                 retClearLines++;
-                Debug.Log("y‚Ì’l‚Í"+y);
+                Debug.Log("yï¿½Ì’lï¿½ï¿½"+y);
                 for (int y2 = y; y2 > 0; y2--)
                 {
                     for (int x2 = 1; x2 < STAGE_MAX_X - 1; x2++)
