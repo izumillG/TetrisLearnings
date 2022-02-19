@@ -148,7 +148,6 @@ public class GameManager : MonoBehaviour
         m_dropCurrentTime += Time.deltaTime;
         if (m_dropCurrentTime > m_refreshSpan)
         {
-            m_dropCurrentTime = 0f;
             MoveMino(m_mino, Mino.MoveType.Drop);
         }
     }
@@ -509,6 +508,7 @@ public class GameManager : MonoBehaviour
         if (CanMoveMino(mino, Mino.MoveType.Drop))
         {
             mino.Drop();
+            m_dropCurrentTime = 0f;
             PutMino(false, false);
             return;
         }
