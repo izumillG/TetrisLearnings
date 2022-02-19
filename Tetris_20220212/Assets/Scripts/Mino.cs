@@ -5,6 +5,7 @@ public class Mino
 {
     public enum MoveType
     {
+        None,
         Left,
         Right,
         Drop        

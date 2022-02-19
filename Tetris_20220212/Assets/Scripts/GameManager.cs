@@ -93,7 +93,7 @@ public class GameManager : MonoBehaviour
 
         ControlMino();
         
-        WaitControl();
+        //WaitControl();
 
         PrintStatus();
     }
@@ -158,6 +158,37 @@ public class GameManager : MonoBehaviour
         m_refreshSpan = m_totalClearedLines > m_speedMaximizeLineNum ? m_maxDropSpeed : m_minDropSpeed - m_dropSpeedCoefficient * totalClearedLines;
     }
 
+
+    #region ControlMino
+
+    private float HoldKeyTime = 0;
+    private Mino.MoveType HoldKeyType = Mino.MoveType.None;
+    private bool _isHoldKey = false;
+    private bool IsHodlKey
+    {
+        get
+        {
+            return _isHoldKey;
+        }
+
+        set 
+        {
+            if(value == false)
+            {
+                HoldKeyTime = 0;
+            }
+            _isHoldKey = value;
+        }
+    }
+
+    private bool IsMoveHoldKey
+    {
+        get
+        {
+            return HoldKeyTime > m_buttonPressedJudgeSpan;
+        }
+    }
+
     private void ControlMino()
     {
         OnPressedLeft();
@@ -170,6 +201,8 @@ public class GameManager : MonoBehaviour
         OnReleasedLeft();
         OnReleasedRight();
         OnReleasedDown();
+
+        OnPressHold();
     }
 
     #region InputSystem
@@ -386,6 +419,10 @@ public class GameManager : MonoBehaviour
         m_moveCurrentTime = 0f;
         MoveMino(m_mino, Mino.MoveType.Left);
         m_isLeftButtonPressed = PressType.HalfPressed;
+
+
+        IsHodlKey = true;
+        HoldKeyType = Mino.MoveType.Left;
     }
 
     private void OnReleasedLeft()
@@ -393,6 +430,9 @@ public class GameManager : MonoBehaviour
         if (InputReleasedLeft)
         {
             m_isLeftButtonPressed = PressType.NonPressed;
+
+            IsHodlKey = false;
+            HoldKeyType = Mino.MoveType.None;
         }
     }
 
@@ -406,6 +446,9 @@ public class GameManager : MonoBehaviour
         m_moveCurrentTime = 0f;
         MoveMino(m_mino, Mino.MoveType.Right);
         m_isRightButtonPressed = PressType.HalfPressed;
+
+        IsHodlKey = true;
+        HoldKeyType = Mino.MoveType.Right;
     }
 
     private void OnReleasedRight()
@@ -413,6 +456,9 @@ public class GameManager : MonoBehaviour
         if (InputReleasedRight)
         {
             m_isRightButtonPressed = PressType.NonPressed;
+
+            IsHodlKey = false;
+            HoldKeyType = Mino.MoveType.None;
         }
     }
 
@@ -423,6 +469,9 @@ public class GameManager : MonoBehaviour
             m_dropCurrentTime = 0f;
             MoveMino(m_mino, Mino.MoveType.Drop);
             m_isDownButtonPressed = true;
+
+            IsHodlKey = true;
+            HoldKeyType = Mino.MoveType.Drop;
         }
     }
 
@@ -431,6 +480,9 @@ public class GameManager : MonoBehaviour
         if (InputReleasedDown)
         {
             m_isDownButtonPressed = false;
+
+            IsHodlKey = false;
+            HoldKeyType = Mino.MoveType.None;
         }
     }
 
@@ -457,6 +509,36 @@ public class GameManager : MonoBehaviour
             MoveMino(m_mino.LeftRot, m_mino.RightRot);
         }
     }
+
+
+    private const float resetHoldKeyTime = 0.2f;
+    private void OnPressHold()
+    {
+        if (IsHodlKey)
+        {
+            HoldKeyTime += Time.deltaTime;
+        }
+
+        if(IsMoveHoldKey)
+        {
+            switch (HoldKeyType)
+            {
+                case Mino.MoveType.Left:
+                    MoveMino(m_mino, Mino.MoveType.Left);
+                    break;
+                case Mino.MoveType.Right:
+                    MoveMino(m_mino, Mino.MoveType.Right);
+                    break;
+                case Mino.MoveType.Drop:
+                    MoveMino(m_mino, Mino.MoveType.Drop);
+                    break;
+            }
+
+            HoldKeyTime = resetHoldKeyTime;
+        }
+    }
+
+    #endregion
 
     #endregion
 
@@ -640,6 +722,7 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
 
     private bool IsCanPut()
     {
