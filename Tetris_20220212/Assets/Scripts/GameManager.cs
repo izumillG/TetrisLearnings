@@ -411,7 +411,12 @@ public class GameManager : MonoBehaviour
 
     private void OnPressedLeft()
     {
-        if(!InputPressedLeft || InputPressedRight)
+        if (IsHodlKey)
+        {
+            return;
+        }
+
+        if (!InputPressedLeft || InputPressedRight)
         {
             return;
         }
@@ -427,6 +432,11 @@ public class GameManager : MonoBehaviour
 
     private void OnReleasedLeft()
     {
+        if (HoldKeyType != Mino.MoveType.Left)
+        {
+            return;
+        }
+
         if (InputReleasedLeft)
         {
             m_isLeftButtonPressed = PressType.NonPressed;
@@ -438,6 +448,11 @@ public class GameManager : MonoBehaviour
 
     private void OnPressedRight()
     {
+        if (IsHodlKey)
+        {
+            return;
+        }
+
         if (!InputPressedRight || InputPressedLeft)
         {
             return;
@@ -453,6 +468,11 @@ public class GameManager : MonoBehaviour
 
     private void OnReleasedRight()
     {
+        if(HoldKeyType != Mino.MoveType.Right)
+        {
+            return;
+        }
+
         if (InputReleasedRight)
         {
             m_isRightButtonPressed = PressType.NonPressed;
@@ -464,6 +484,11 @@ public class GameManager : MonoBehaviour
 
     private void OnPressedDown()
     {
+        if(IsHodlKey)
+        {
+            return;
+        }
+
         if (InputPressedDown)
         {
             m_dropCurrentTime = 0f;
@@ -477,6 +502,11 @@ public class GameManager : MonoBehaviour
 
     private void OnReleasedDown()
     {
+        if (HoldKeyType != Mino.MoveType.Drop)
+        {
+            return;
+        }
+
         if (InputReleasedDown)
         {
             m_isDownButtonPressed = false;
